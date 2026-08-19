@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
@@ -20,32 +21,41 @@
             <TextView
                 style="@style/TableHead"
                 android:layout_width="0dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:paddingLeft="8dp"
                 android:text="@string/process_name" />
 
-            <View style="@style/TableHeadRightLine" />
+            <View
+                style="@style/TableHeadRightLine" />
 
             <TextView
                 style="@style/TableHead"
                 android:layout_width="60dp"
+                android:layout_height="wrap_content"
                 android:text="@string/pid" />
 
-            <View style="@style/TableHeadRightLine" />
+            <View
+                style="@style/TableHeadRightLine" />
 
             <TextView
                 style="@style/TableHead"
                 android:layout_width="110dp"
+                android:layout_height="wrap_content"
                 android:text="@string/memory" />
 
-            <View style="@style/TableHeadRightLine" />
+            <View
+                style="@style/TableHeadRightLine" />
 
             <View
                 style="@style/TableHead"
-                android:layout_width="40dp" />
+                android:layout_width="40dp"
+                android:layout_height="match_parent" />
+
         </LinearLayout>
 
-        <View style="@style/TableHeadBottomLine" />
+        <View
+            style="@style/TableHeadBottomLine" />
 
         <FrameLayout
             android:layout_width="match_parent"
@@ -61,6 +71,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical" />
+
             </ScrollView>
 
             <TextView
@@ -70,7 +81,9 @@
                 android:gravity="center"
                 android:text="@string/no_items_to_display"
                 android:visibility="gone" />
+
         </FrameLayout>
+
     </LinearLayout>
 
     <ScrollView
@@ -83,5 +96,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical" />
+
     </ScrollView>
+
 </LinearLayout>
