@@ -24,28 +24,33 @@
                 android:paddingLeft="8dp"
                 android:text="@string/process_name" />
 
-            <View style="@style/TableHeadRightLine" />
+            <View
+                style="@style/TableHeadRightLine" />
 
             <TextView
                 style="@style/TableHead"
                 android:layout_width="60dp"
                 android:text="@string/pid" />
 
-            <View style="@style/TableHeadRightLine" />
+            <View
+                style="@style/TableHeadRightLine" />
 
             <TextView
                 style="@style/TableHead"
                 android:layout_width="110dp"
                 android:text="@string/memory" />
 
-            <View style="@style/TableHeadRightLine" />
+            <View
+                style="@style/TableHeadRightLine" />
 
             <View
                 style="@style/TableHead"
                 android:layout_width="40dp" />
+
         </LinearLayout>
 
-        <View style="@style/TableHeadBottomLine" />
+        <View
+            style="@style/TableHeadBottomLine" />
 
         <FrameLayout
             android:layout_width="match_parent"
@@ -61,6 +66,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical" />
+
             </ScrollView>
 
             <TextView
@@ -70,7 +76,9 @@
                 android:gravity="center"
                 android:text="@string/no_items_to_display"
                 android:visibility="gone" />
+
         </FrameLayout>
+
     </LinearLayout>
 
     <ScrollView
@@ -83,5 +91,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical" />
+
     </ScrollView>
+
 </LinearLayout>
