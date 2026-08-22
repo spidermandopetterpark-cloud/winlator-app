@@ -7,8 +7,12 @@ public class Box64Preset {
     public static final String CONSERVATIVE = "CONSERVATIVE";
     public static final String INTERMEDIATE = "INTERMEDIATE";
     public static final String PERFORMANCE = "PERFORMANCE";
+    public static final String EXTREME = "EXTREME";
+    public static final String MAXIMUM_PERFORMANCE = "MAXIMUM_PERFORMANCE";
     public static final String CUSTOM = "CUSTOM";
+
     public static final String DEFAULT = INTERMEDIATE;
+
     public final String id;
     public final String name;
 
