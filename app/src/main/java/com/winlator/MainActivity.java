@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 
 import androidx.annotation.IntRange;
@@ -36,24 +37,53 @@ import com.winlator.xenvironment.RootFSInstaller;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    private static final String TAG = "WinlatorMainActivity";
+
+    /*
+     * ============================================================
+     * CONFIGURAÇÃO
+     * ============================================================
+     */
+
     public static final boolean DEBUG_MODE = false;
 
     public static final @IntRange(from = 1, to = 19)
     byte CONTAINER_PATTERN_COMPRESSION_LEVEL = 9;
+
+    /*
+     * ============================================================
+     * REQUEST CODES
+     * ============================================================
+     */
 
     public static final byte PERMISSION_WRITE_EXTERNAL_STORAGE_REQUEST_CODE = 1;
     public static final byte OPEN_FILE_REQUEST_CODE = 2;
     public static final byte EDIT_INPUT_CONTROLS_REQUEST_CODE = 3;
     public static final byte OPEN_DIRECTORY_REQUEST_CODE = 4;
 
+    /*
+     * ============================================================
+     * UI
+     * ============================================================
+     */
+
     private DrawerLayout drawerLayout;
+
     private NavigationView navigationView;
+
     private ActionBar actionBar;
+
+    /*
+     * ============================================================
+     * WINLATOR
+     * ============================================================
+     */
 
     public final PreloaderDialog preloaderDialog =
             new PreloaderDialog(this);
 
     private boolean editInputControls = false;
+
     private int selectedProfileId;
 
     private Callback<Uri> openFileCallback;
@@ -62,8 +92,39 @@ public class MainActivity extends AppCompatActivity
 
     private Fragment currentFragment;
 
+    /*
+     * ============================================================
+     * MEMORY MANAGER
+     * ============================================================
+     *
+     * MemoryManager.java
+     *
+     * RAM
+     * SWAP
+     * Memória virtual
+     * Monitoramento
+     * Perfil de memória
+     */
+
+    private MemoryManager memoryManager;
+
+    /*
+     * ============================================================
+     * TASK MANAGER
+     * ============================================================
+     */
+
+    private TaskManagerFragment taskManagerFragment;
+
+    /*
+     * ============================================================
+     * ON CREATE
+     * ============================================================
+     */
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(
+            Bundle savedInstanceState) {
 
         AppUtils.setActivityTheme(this);
 
@@ -73,15 +134,31 @@ public class MainActivity extends AppCompatActivity
 
         /*
          * ========================================================
+         * MEMORY MANAGER
+         * ========================================================
+         */
+
+        initializeMemoryManager();
+
+        /*
+         * ========================================================
          * DRAWER
          * ========================================================
          */
 
-        drawerLayout = findViewById(R.id.DrawerLayout);
+        drawerLayout =
+                findViewById(
+                        R.id.DrawerLayout
+                );
 
-        navigationView = findViewById(R.id.NavigationView);
+        navigationView =
+                findViewById(
+                        R.id.NavigationView
+                );
 
-        navigationView.setNavigationItemSelectedListener(this);
+        navigationView.setNavigationItemSelectedListener(
+                this
+        );
 
         /*
          * ========================================================
@@ -89,12 +166,20 @@ public class MainActivity extends AppCompatActivity
          * ========================================================
          */
 
-        setSupportActionBar(findViewById(R.id.Toolbar));
+        setSupportActionBar(
+                findViewById(
+                        R.id.Toolbar
+                )
+        );
 
-        actionBar = getSupportActionBar();
+        actionBar =
+                getSupportActionBar();
 
         if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
+
+            actionBar.setDisplayHomeAsUpEnabled(
+                    true
+            );
         }
 
         /*
@@ -104,7 +189,10 @@ public class MainActivity extends AppCompatActivity
          */
 
         preferences =
-                PreferenceManager.getDefaultSharedPreferences(this);
+                PreferenceManager
+                        .getDefaultSharedPreferences(
+                                this
+                        );
 
         /*
          * ========================================================
@@ -112,7 +200,8 @@ public class MainActivity extends AppCompatActivity
          * ========================================================
          */
 
-        Intent intent = getIntent();
+        Intent intent =
+                getIntent();
 
         editInputControls =
                 intent.getBooleanExtra(
@@ -122,7 +211,7 @@ public class MainActivity extends AppCompatActivity
 
         /*
          * ========================================================
-         * EDIT INPUT CONTROLS
+         * INPUT CONTROLS
          * ========================================================
          */
 
@@ -141,17 +230,17 @@ public class MainActivity extends AppCompatActivity
                 );
             }
 
-            MenuItem inputControlsItem =
+            MenuItem item =
                     navigationView
                             .getMenu()
                             .findItem(
                                     R.id.menu_item_input_controls
                             );
 
-            if (inputControlsItem != null) {
+            if (item != null) {
 
                 onNavigationItemSelected(
-                        inputControlsItem
+                        item
                 );
 
                 navigationView.setCheckedItem(
@@ -159,7 +248,6 @@ public class MainActivity extends AppCompatActivity
                 );
             }
 
-            return;
         }
 
         /*
@@ -168,111 +256,309 @@ public class MainActivity extends AppCompatActivity
          * ========================================================
          */
 
-        boolean showShortcutsFirst =
-                preferences.getBoolean(
-                        "show_shortcuts_first",
-                        false
+        else {
+
+            boolean showShortcutsFirst =
+                    preferences.getBoolean(
+                            "show_shortcuts_first",
+                            false
+                    );
+
+            int selectedMenuItemId =
+                    intent.getIntExtra(
+                            "selected_menu_item_id",
+                            0
+                    );
+
+            int menuItemId;
+
+            if (selectedMenuItemId > 0) {
+
+                menuItemId =
+                        selectedMenuItemId;
+
+            } else {
+
+                menuItemId =
+                        showShortcutsFirst
+                                ? R.id.menu_item_shortcuts
+                                : R.id.menu_item_containers;
+            }
+
+            if (actionBar != null) {
+
+                actionBar.setHomeAsUpIndicator(
+                        R.drawable.icon_action_bar_menu
+                );
+            }
+
+            MenuItem initialItem =
+                    navigationView
+                            .getMenu()
+                            .findItem(
+                                    menuItemId
+                            );
+
+            if (initialItem != null) {
+
+                onNavigationItemSelected(
+                        initialItem
                 );
 
-        int selectedMenuItemId =
-                intent.getIntExtra(
-                        "selected_menu_item_id",
-                        0
+                navigationView.setCheckedItem(
+                        menuItemId
                 );
+            }
 
-        int menuItemId;
+            /*
+             * ====================================================
+             * PERMISSIONS
+             * ====================================================
+             */
 
-        if (selectedMenuItemId > 0) {
+            if (!requestAppPermissions()) {
 
-            menuItemId = selectedMenuItemId;
+                RootFSInstaller.installIfNeeded(
+                        this
+                );
+            }
 
-        } else {
+            /*
+             * ====================================================
+             * CONTAINER
+             * ====================================================
+             */
 
-            menuItemId =
-                    showShortcutsFirst
-                            ? R.id.menu_item_shortcuts
-                            : R.id.menu_item_containers;
-        }
+            int containerId =
+                    intent.getIntExtra(
+                            "container_id",
+                            0
+                    );
 
-        if (actionBar != null) {
+            String startPath =
+                    intent.getStringExtra(
+                            "start_path"
+                    );
 
-            actionBar.setHomeAsUpIndicator(
-                    R.drawable.icon_action_bar_menu
-            );
-        }
+            if (containerId > 0
+                    && startPath != null) {
 
-        MenuItem initialItem =
-                navigationView
-                        .getMenu()
-                        .findItem(menuItemId);
-
-        if (initialItem != null) {
-
-            onNavigationItemSelected(
-                    initialItem
-            );
-
-            navigationView.setCheckedItem(
-                    menuItemId
-            );
+                showFragment(
+                        new ContainerFileManagerFragment(
+                                containerId,
+                                startPath
+                        )
+                );
+            }
         }
 
         /*
          * ========================================================
-         * PERMISSIONS / ROOTFS
+         * DEBUG
          * ========================================================
          */
 
-        if (!requestAppPermissions()) {
+        if (DEBUG_MODE) {
 
-            RootFSInstaller.installIfNeeded(this);
+            Log.d(
+                    TAG,
+                    "Winlator iniciado"
+            );
+
+            logMemoryInformation();
         }
+    }
 
-        /*
-         * ========================================================
-         * OPEN CONTAINER
-         * ========================================================
-         */
+    /*
+     * ============================================================
+     * MEMORY MANAGER
+     * ============================================================
+     */
 
-        int containerId =
-                intent.getIntExtra(
-                        "container_id",
-                        0
+    private void initializeMemoryManager() {
+
+        try {
+
+            memoryManager =
+                    new MemoryManager(
+                            this
+                    );
+
+            /*
+             * Inicializa.
+             */
+
+            boolean initialized =
+                    memoryManager.initialize();
+
+            /*
+             * SWAP configurado:
+             *
+             * 8 GB
+             */
+
+            memoryManager.setConfiguredSwapGB(
+                    8
+            );
+
+            /*
+             * Memória virtual:
+             *
+             * 4 GB
+             */
+
+            memoryManager.setVirtualRamMB(
+                    4096
+            );
+
+            /*
+             * Perfil:
+             *
+             * PERFORMANCE
+             */
+
+            memoryManager.setProfile(
+                    MemoryManager.Profile.PERFORMANCE
+            );
+
+            if (DEBUG_MODE) {
+
+                Log.d(
+                        TAG,
+                        "MemoryManager initialized = "
+                                + initialized
                 );
+            }
 
-        String startPath =
-                intent.getStringExtra(
-                        "start_path"
-                );
+        } catch (Throwable e) {
 
-        if (containerId > 0 && startPath != null) {
+            memoryManager = null;
 
-            showFragment(
-                    new ContainerFileManagerFragment(
-                            containerId,
-                            startPath
-                    )
+            Log.e(
+                    TAG,
+                    "Erro ao inicializar MemoryManager",
+                    e
             );
         }
     }
 
     /*
      * ============================================================
-     * LOCALE
+     * MEMORY INFORMATION
      * ============================================================
      */
 
-    @Override
-    protected void attachBaseContext(Context newBase) {
+    private void logMemoryInformation() {
 
-        super.attachBaseContext(
-                LocaleHelper.setSystemLocale(newBase)
+        if (memoryManager == null) {
+            return;
+        }
+
+        try {
+
+            long ram =
+                    memoryManager.getRamSize();
+
+            long available =
+                    memoryManager.getAvailableMemory();
+
+            long used =
+                    memoryManager.getUsedMemory();
+
+            long swap =
+                    memoryManager.getSwapSize();
+
+            long swapUsed =
+                    memoryManager.getSwapUsed();
+
+            Log.d(
+                    TAG,
+                    "RAM total = "
+                            + MemoryManager.formatGB(ram)
+            );
+
+            Log.d(
+                    TAG,
+                    "RAM usada = "
+                            + MemoryManager.formatGB(used)
+            );
+
+            Log.d(
+                    TAG,
+                    "RAM disponível = "
+                            + MemoryManager.formatGB(available)
+            );
+
+            Log.d(
+                    TAG,
+                    "SWAP total = "
+                            + MemoryManager.formatGB(swap)
+            );
+
+            Log.d(
+                    TAG,
+                    "SWAP usada = "
+                            + MemoryManager.formatGB(swapUsed)
+            );
+
+        } catch (Throwable e) {
+
+            Log.e(
+                    TAG,
+                    "Erro ao ler memória",
+                    e
+            );
+        }
+    }
+
+    /*
+     * ============================================================
+     * GET MEMORY MANAGER
+     * ============================================================
+     */
+
+    @Nullable
+    public MemoryManager getMemoryManager() {
+
+        return memoryManager;
+    }
+
+    /*
+     * ============================================================
+     * OPEN TASK MANAGER
+     * ============================================================
+     */
+
+    private void openTaskManager() {
+
+        taskManagerFragment =
+                new TaskManagerFragment();
+
+        showFragment(
+                taskManagerFragment
         );
     }
 
     /*
      * ============================================================
-     * PERMISSIONS
+     * CONTEXT
+     * ============================================================
+     */
+
+    @Override
+    protected void attachBaseContext(
+            Context newBase) {
+
+        super.attachBaseContext(
+                LocaleHelper.setSystemLocale(
+                        newBase
+                )
+        );
+    }
+
+    /*
+     * ============================================================
+     * PERMISSIONS RESULT
      * ============================================================
      */
 
@@ -292,10 +578,12 @@ public class MainActivity extends AppCompatActivity
                 PERMISSION_WRITE_EXTERNAL_STORAGE_REQUEST_CODE) {
 
             if (grantResults.length > 0
-                    && grantResults[0] ==
-                    PackageManager.PERMISSION_GRANTED) {
+                    && grantResults[0]
+                    == PackageManager.PERMISSION_GRANTED) {
 
-                RootFSInstaller.installIfNeeded(this);
+                RootFSInstaller.installIfNeeded(
+                        this
+                );
 
             } else {
 
@@ -306,7 +594,7 @@ public class MainActivity extends AppCompatActivity
 
     /*
      * ============================================================
-     * FILE RESULT
+     * ACTIVITY RESULT
      * ============================================================
      */
 
@@ -324,7 +612,8 @@ public class MainActivity extends AppCompatActivity
 
         if (requestCode ==
                 OPEN_FILE_REQUEST_CODE
-                && resultCode == Activity.RESULT_OK) {
+                && resultCode ==
+                Activity.RESULT_OK) {
 
             if (openFileCallback != null
                     && data != null
@@ -349,7 +638,9 @@ public class MainActivity extends AppCompatActivity
     public void onConfigurationChanged(
             @NonNull Configuration newConfig) {
 
-        super.onConfigurationChanged(newConfig);
+        super.onConfigurationChanged(
+                newConfig
+        );
 
         if ((newConfig.orientation ==
                 Configuration.ORIENTATION_LANDSCAPE
@@ -381,19 +672,29 @@ public class MainActivity extends AppCompatActivity
             if (currentFragment instanceof
                     BaseFileManagerFragment) {
 
-                BaseFileManagerFragment
-                        fileManagerFragment =
+                BaseFileManagerFragment fragment =
                         (BaseFileManagerFragment)
                                 currentFragment;
 
-                if (fileManagerFragment.onBackPressed()) {
+                if (fragment.onBackPressed()) {
                     return;
                 }
+            }
 
-            } else if (currentFragment instanceof
+            else if (currentFragment instanceof
                     ContainersFragment) {
 
                 finish();
+
+                return;
+            }
+
+            else if (currentFragment instanceof
+                    TaskManagerFragment) {
+
+                showFragment(
+                        new ContainersFragment()
+                );
 
                 return;
             }
@@ -406,7 +707,7 @@ public class MainActivity extends AppCompatActivity
 
     /*
      * ============================================================
-     * FILE CALLBACK
+     * OPEN FILE CALLBACK
      * ============================================================
      */
 
@@ -425,27 +726,27 @@ public class MainActivity extends AppCompatActivity
 
     private boolean requestAppPermissions() {
 
-        boolean writePermission =
+        boolean write =
                 ContextCompat.checkSelfPermission(
                         this,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE
                 ) == PackageManager.PERMISSION_GRANTED;
 
-        boolean readPermission =
+        boolean read =
                 ContextCompat.checkSelfPermission(
                         this,
                         Manifest.permission.READ_EXTERNAL_STORAGE
                 ) == PackageManager.PERMISSION_GRANTED;
 
-        if (writePermission && readPermission) {
-
+        if (write && read) {
             return false;
         }
 
-        String[] permissions = new String[]{
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.READ_EXTERNAL_STORAGE
-        };
+        String[] permissions =
+                new String[]{
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.READ_EXTERNAL_STORAGE
+                };
 
         ActivityCompat.requestPermissions(
                 this,
@@ -458,7 +759,7 @@ public class MainActivity extends AppCompatActivity
 
     /*
      * ============================================================
-     * OPTIONS MENU
+     * TOOLBAR
      * ============================================================
      */
 
@@ -479,41 +780,28 @@ public class MainActivity extends AppCompatActivity
             );
         }
 
-        /*
-         * Input Controls
-         */
-
         if (editInputControls) {
 
-            setResult(RESULT_OK);
+            setResult(
+                    RESULT_OK
+            );
 
             finish();
 
             return true;
         }
 
-        /*
-         * File Manager
-         */
-
         if (currentFragment instanceof
                 BaseFileManagerFragment) {
 
-            BaseFileManagerFragment
-                    fileManagerFragment =
+            BaseFileManagerFragment fragment =
                     (BaseFileManagerFragment)
                             currentFragment;
 
-            if (fileManagerFragment
-                    .onOptionsMenuClicked()) {
-
+            if (fragment.onOptionsMenuClicked()) {
                 return true;
             }
         }
-
-        /*
-         * Drawer
-         */
 
         if (drawerLayout != null) {
 
@@ -538,8 +826,8 @@ public class MainActivity extends AppCompatActivity
         FragmentManager fragmentManager =
                 getSupportFragmentManager();
 
-        if (fragmentManager.getBackStackEntryCount()
-                > 0) {
+        if (fragmentManager
+                .getBackStackEntryCount() > 0) {
 
             fragmentManager.popBackStack(
                     null,
@@ -547,7 +835,16 @@ public class MainActivity extends AppCompatActivity
             );
         }
 
-        switch (item.getItemId()) {
+        int itemId =
+                item.getItemId();
+
+        switch (itemId) {
+
+            /*
+             * ====================================================
+             * SHORTCUTS
+             * ====================================================
+             */
 
             case R.id.menu_item_shortcuts:
 
@@ -564,6 +861,12 @@ public class MainActivity extends AppCompatActivity
 
                 break;
 
+            /*
+             * ====================================================
+             * CONTAINERS
+             * ====================================================
+             */
+
             case R.id.menu_item_containers:
 
                 preferences.edit()
@@ -579,6 +882,12 @@ public class MainActivity extends AppCompatActivity
 
                 break;
 
+            /*
+             * ====================================================
+             * INPUT CONTROLS
+             * ====================================================
+             */
+
             case R.id.menu_item_input_controls:
 
                 showFragment(
@@ -589,6 +898,24 @@ public class MainActivity extends AppCompatActivity
 
                 break;
 
+            /*
+             * ====================================================
+             * TASK MANAGER
+             * ====================================================
+             */
+
+            case R.id.menu_item_task_manager:
+
+                openTaskManager();
+
+                break;
+
+            /*
+             * ====================================================
+             * SETTINGS
+             * ====================================================
+             */
+
             case R.id.menu_item_settings:
 
                 showFragment(
@@ -597,9 +924,17 @@ public class MainActivity extends AppCompatActivity
 
                 break;
 
+            /*
+             * ====================================================
+             * ABOUT
+             * ====================================================
+             */
+
             case R.id.menu_item_about:
 
-                new AboutDialog(this).show();
+                new AboutDialog(
+                        this
+                ).show();
 
                 break;
         }
@@ -609,7 +944,7 @@ public class MainActivity extends AppCompatActivity
 
     /*
      * ============================================================
-     * FRAGMENT
+     * SHOW FRAGMENT
      * ============================================================
      */
 
@@ -638,6 +973,32 @@ public class MainActivity extends AppCompatActivity
             );
         }
 
-        currentFragment = fragment;
+        currentFragment =
+                fragment;
+    }
+
+    /*
+     * ============================================================
+     * DESTROY
+     * ============================================================
+     */
+
+    @Override
+    protected void onDestroy() {
+
+        if (memoryManager != null) {
+
+            memoryManager.stopMonitoring();
+
+            memoryManager = null;
+        }
+
+        taskManagerFragment = null;
+
+        currentFragment = null;
+
+        openFileCallback = null;
+
+        super.onDestroy();
     }
         }
