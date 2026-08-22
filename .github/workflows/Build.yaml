@@ -1,0 +1,172 @@
+name: Build Winlator
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+  pull_request:
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Winlator APK
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 60
+
+    steps:
+
+      # =========================================================
+      # CHECKOUT
+      # =========================================================
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      # =========================================================
+      # JAVA
+      # =========================================================
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      # =========================================================
+      # ANDROID SDK
+      # =========================================================
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses || true
+
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0" \
+            "ndk;28.2.13676358"
+
+      # =========================================================
+      # GRADLE
+      # =========================================================
+
+      - name: Grant Gradle permission
+        run: chmod +x ./gradlew
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # =========================================================
+      # SHOW ENVIRONMENT
+      # =========================================================
+
+      - name: Show build environment
+        run: |
+          echo "=============================================="
+          echo "           WINLATOR BUILD ENVIRONMENT"
+          echo "=============================================="
+
+          java -version
+          ./gradlew --version
+
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+
+          echo "=============================================="
+          echo "           REPOSITORY STRUCTURE"
+          echo "=============================================="
+
+          find app -maxdepth 3 -type f | sort | head -200
+
+      # =========================================================
+      # CLEAN
+      # =========================================================
+
+      - name: Clean project
+        run: |
+          ./gradlew clean --no-daemon
+
+      # =========================================================
+      # BUILD DEBUG
+      # =========================================================
+
+      - name: Build Debug APK
+        run: |
+          ./gradlew :app:assembleDebug \
+            --no-daemon \
+            --stacktrace
+
+      # =========================================================
+      # CHECK APK
+      # =========================================================
+
+      - name: Verify APK
+        run: |
+          echo "=============================================="
+          echo "             GENERATED APK FILES"
+          echo "=============================================="
+
+          find app/build/outputs -type f \
+            \( -name "*.apk" -o -name "*.aab" \) \
+            -print
+
+      # =========================================================
+      # UPLOAD DEBUG APK
+      # =========================================================
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Winlator-Debug
+          path: |
+            app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      # =========================================================
+      # BUILD RELEASE
+      # =========================================================
+
+      - name: Build Release APK
+        run: |
+          ./gradlew :app:assembleRelease \
+            --no-daemon \
+            --stacktrace
+
+      # =========================================================
+      # UPLOAD RELEASE APK
+      # =========================================================
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Winlator-Release
+          path: |
+            app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+      # =========================================================
+      # UPLOAD BUILD REPORTS
+      # =========================================================
+
+      - name: Upload build reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Winlator-Build-Reports
+          path: |
+            **/build/reports/**
+            **/build/outputs/logs/**
+          if-no-files-found: ignore
