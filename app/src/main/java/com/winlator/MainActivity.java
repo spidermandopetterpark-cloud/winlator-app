@@ -9,7 +9,6 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MenuItem;
 
 import androidx.annotation.IntRange;
@@ -37,45 +36,19 @@ import com.winlator.xenvironment.RootFSInstaller;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    private static final String TAG = "WinlatorMainActivity";
-
-    /*
-     * ============================================================
-     * CONFIGURAÇÃO PRINCIPAL
-     * ============================================================
-     */
-
     public static final boolean DEBUG_MODE = false;
 
     public static final @IntRange(from = 1, to = 19)
     byte CONTAINER_PATTERN_COMPRESSION_LEVEL = 9;
-
-    /*
-     * ============================================================
-     * REQUEST CODES
-     * ============================================================
-     */
 
     public static final byte PERMISSION_WRITE_EXTERNAL_STORAGE_REQUEST_CODE = 1;
     public static final byte OPEN_FILE_REQUEST_CODE = 2;
     public static final byte EDIT_INPUT_CONTROLS_REQUEST_CODE = 3;
     public static final byte OPEN_DIRECTORY_REQUEST_CODE = 4;
 
-    /*
-     * ============================================================
-     * UI
-     * ============================================================
-     */
-
     private DrawerLayout drawerLayout;
     private NavigationView navigationView;
     private ActionBar actionBar;
-
-    /*
-     * ============================================================
-     * WINLATOR
-     * ============================================================
-     */
 
     public final PreloaderDialog preloaderDialog =
             new PreloaderDialog(this);
@@ -89,27 +62,6 @@ public class MainActivity extends AppCompatActivity
 
     private Fragment currentFragment;
 
-    /*
-     * ============================================================
-     * MEMORY MANAGER
-     * ============================================================
-     *
-     * O MemoryManager fica separado do Activity.
-     *
-     * MainActivity -> MemoryManager -> JNI -> C++
-     *
-     * AndroidMemory.cpp / WineMemory.cpp NÃO devem ser colocados
-     * dentro deste arquivo.
-     */
-
-    private MemoryManager memoryManager;
-
-    /*
-     * ============================================================
-     * ACTIVITY
-     * ============================================================
-     */
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -120,17 +72,9 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.main_activity);
 
         /*
-         * --------------------------------------------------------
-         * Inicializa o gerenciador de memória
-         * --------------------------------------------------------
-         */
-
-        initializeMemoryManager();
-
-        /*
-         * --------------------------------------------------------
-         * Drawer
-         * --------------------------------------------------------
+         * ========================================================
+         * DRAWER
+         * ========================================================
          */
 
         drawerLayout = findViewById(R.id.DrawerLayout);
@@ -140,9 +84,9 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         /*
-         * --------------------------------------------------------
-         * Toolbar
-         * --------------------------------------------------------
+         * ========================================================
+         * TOOLBAR
+         * ========================================================
          */
 
         setSupportActionBar(findViewById(R.id.Toolbar));
@@ -154,18 +98,18 @@ public class MainActivity extends AppCompatActivity
         }
 
         /*
-         * --------------------------------------------------------
-         * Preferences
-         * --------------------------------------------------------
+         * ========================================================
+         * PREFERENCES
+         * ========================================================
          */
 
         preferences =
                 PreferenceManager.getDefaultSharedPreferences(this);
 
         /*
-         * --------------------------------------------------------
-         * Intent
-         * --------------------------------------------------------
+         * ========================================================
+         * INTENT
+         * ========================================================
          */
 
         Intent intent = getIntent();
@@ -178,7 +122,7 @@ public class MainActivity extends AppCompatActivity
 
         /*
          * ========================================================
-         * MODO EDIÇÃO DOS CONTROLES
+         * EDIT INPUT CONTROLS
          * ========================================================
          */
 
@@ -191,15 +135,18 @@ public class MainActivity extends AppCompatActivity
                     );
 
             if (actionBar != null) {
+
                 actionBar.setHomeAsUpIndicator(
                         R.drawable.icon_action_bar_back
                 );
             }
 
             MenuItem inputControlsItem =
-                    navigationView.getMenu().findItem(
-                            R.id.menu_item_input_controls
-                    );
+                    navigationView
+                            .getMenu()
+                            .findItem(
+                                    R.id.menu_item_input_controls
+                            );
 
             if (inputControlsItem != null) {
 
@@ -212,236 +159,106 @@ public class MainActivity extends AppCompatActivity
                 );
             }
 
-        }
-
-        /*
-         * ========================================================
-         * MODO NORMAL
-         * ========================================================
-         */
-
-        else {
-
-            boolean showShortcutsFirst =
-                    preferences.getBoolean(
-                            "show_shortcuts_first",
-                            false
-                    );
-
-            int selectedMenuItemId =
-                    intent.getIntExtra(
-                            "selected_menu_item_id",
-                            0
-                    );
-
-            int menuItemId;
-
-            if (selectedMenuItemId > 0) {
-
-                menuItemId = selectedMenuItemId;
-
-            }
-            else {
-
-                menuItemId =
-                        showShortcutsFirst
-                                ? R.id.menu_item_shortcuts
-                                : R.id.menu_item_containers;
-            }
-
-            if (actionBar != null) {
-
-                actionBar.setHomeAsUpIndicator(
-                        R.drawable.icon_action_bar_menu
-                );
-            }
-
-            MenuItem initialItem =
-                    navigationView.getMenu().findItem(
-                            menuItemId
-                    );
-
-            if (initialItem != null) {
-
-                onNavigationItemSelected(
-                        initialItem
-                );
-
-                navigationView.setCheckedItem(
-                        menuItemId
-                );
-            }
-
-            /*
-             * ----------------------------------------------------
-             * Permissões / RootFS
-             * ----------------------------------------------------
-             */
-
-            if (!requestAppPermissions()) {
-
-                RootFSInstaller.installIfNeeded(this);
-            }
-
-            /*
-             * ----------------------------------------------------
-             * Abrir container específico
-             * ----------------------------------------------------
-             */
-
-            int containerId =
-                    intent.getIntExtra(
-                            "container_id",
-                            0
-                    );
-
-            String startPath =
-                    intent.getStringExtra(
-                            "start_path"
-                    );
-
-            if (containerId > 0 && startPath != null) {
-
-                showFragment(
-                        new ContainerFileManagerFragment(
-                                containerId,
-                                startPath
-                        )
-                );
-            }
-        }
-
-        /*
-         * ========================================================
-         * DEBUG
-         * ========================================================
-         */
-
-        if (DEBUG_MODE) {
-
-            Log.d(
-                    TAG,
-                    "Winlator MainActivity iniciado"
-            );
-
-            logMemoryInformation();
-        }
-    }
-
-    /*
-     * ============================================================
-     * MEMORY MANAGER
-     * ============================================================
-     */
-
-    private void initializeMemoryManager() {
-
-        try {
-
-            memoryManager =
-                    new MemoryManager(this);
-
-            /*
-             * Inicializa o backend Java/JNI.
-             */
-
-            boolean initialized =
-                    memoryManager.initialize();
-
-            if (DEBUG_MODE) {
-
-                Log.d(
-                        TAG,
-                        "MemoryManager initialized: "
-                                + initialized
-                );
-            }
-
-        }
-        catch (Throwable e) {
-
-            /*
-             * Não impedir o Winlator de iniciar caso o backend
-             * de memória ainda não esteja disponível.
-             */
-
-            memoryManager = null;
-
-            Log.e(
-                    TAG,
-                    "Falha ao inicializar MemoryManager",
-                    e
-            );
-        }
-    }
-
-    /*
-     * ============================================================
-     * INFORMAÇÕES DE MEMÓRIA
-     * ============================================================
-     */
-
-    private void logMemoryInformation() {
-
-        if (memoryManager == null) {
             return;
         }
 
-        try {
+        /*
+         * ========================================================
+         * NORMAL MODE
+         * ========================================================
+         */
 
-            long ram =
-                    memoryManager.getRamSize();
+        boolean showShortcutsFirst =
+                preferences.getBoolean(
+                        "show_shortcuts_first",
+                        false
+                );
 
-            long swap =
-                    memoryManager.getSwapSize();
+        int selectedMenuItemId =
+                intent.getIntExtra(
+                        "selected_menu_item_id",
+                        0
+                );
 
-            long available =
-                    memoryManager.getAvailableMemory();
+        int menuItemId;
 
-            Log.d(
-                    TAG,
-                    "RAM: " + ram
-                            + " bytes"
-            );
+        if (selectedMenuItemId > 0) {
 
-            Log.d(
-                    TAG,
-                    "SWAP: " + swap
-                            + " bytes"
-            );
+            menuItemId = selectedMenuItemId;
 
-            Log.d(
-                    TAG,
-                    "Available: " + available
-                            + " bytes"
-            );
+        } else {
 
+            menuItemId =
+                    showShortcutsFirst
+                            ? R.id.menu_item_shortcuts
+                            : R.id.menu_item_containers;
         }
-        catch (Throwable e) {
 
-            Log.e(
-                    TAG,
-                    "Erro ao obter informações de memória",
-                    e
+        if (actionBar != null) {
+
+            actionBar.setHomeAsUpIndicator(
+                    R.drawable.icon_action_bar_menu
+            );
+        }
+
+        MenuItem initialItem =
+                navigationView
+                        .getMenu()
+                        .findItem(menuItemId);
+
+        if (initialItem != null) {
+
+            onNavigationItemSelected(
+                    initialItem
+            );
+
+            navigationView.setCheckedItem(
+                    menuItemId
+            );
+        }
+
+        /*
+         * ========================================================
+         * PERMISSIONS / ROOTFS
+         * ========================================================
+         */
+
+        if (!requestAppPermissions()) {
+
+            RootFSInstaller.installIfNeeded(this);
+        }
+
+        /*
+         * ========================================================
+         * OPEN CONTAINER
+         * ========================================================
+         */
+
+        int containerId =
+                intent.getIntExtra(
+                        "container_id",
+                        0
+                );
+
+        String startPath =
+                intent.getStringExtra(
+                        "start_path"
+                );
+
+        if (containerId > 0 && startPath != null) {
+
+            showFragment(
+                    new ContainerFileManagerFragment(
+                            containerId,
+                            startPath
+                    )
             );
         }
     }
 
     /*
      * ============================================================
-     * ACESSO AO MEMORY MANAGER
-     * ============================================================
-     */
-
-    @Nullable
-    public MemoryManager getMemoryManager() {
-
-        return memoryManager;
-    }
-
-    /*
-     * ============================================================
-     * CONTEXT
+     * LOCALE
      * ============================================================
      */
 
@@ -480,8 +297,7 @@ public class MainActivity extends AppCompatActivity
 
                 RootFSInstaller.installIfNeeded(this);
 
-            }
-            else {
+            } else {
 
                 finish();
             }
@@ -507,7 +323,7 @@ public class MainActivity extends AppCompatActivity
         );
 
         if (requestCode ==
-                MainActivity.OPEN_FILE_REQUEST_CODE
+                OPEN_FILE_REQUEST_CODE
                 && resultCode == Activity.RESULT_OK) {
 
             if (openFileCallback != null
@@ -573,9 +389,8 @@ public class MainActivity extends AppCompatActivity
                 if (fileManagerFragment.onBackPressed()) {
                     return;
                 }
-            }
 
-            else if (currentFragment instanceof
+            } else if (currentFragment instanceof
                     ContainersFragment) {
 
                 finish();
@@ -623,6 +438,7 @@ public class MainActivity extends AppCompatActivity
                 ) == PackageManager.PERMISSION_GRANTED;
 
         if (writePermission && readPermission) {
+
             return false;
         }
 
@@ -642,7 +458,7 @@ public class MainActivity extends AppCompatActivity
 
     /*
      * ============================================================
-     * TOOLBAR
+     * OPTIONS MENU
      * ============================================================
      */
 
@@ -664,9 +480,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         /*
-         * --------------------------------------------------------
-         * Modo de edição
-         * --------------------------------------------------------
+         * Input Controls
          */
 
         if (editInputControls) {
@@ -679,9 +493,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         /*
-         * --------------------------------------------------------
          * File Manager
-         * --------------------------------------------------------
          */
 
         if (currentFragment instanceof
@@ -700,9 +512,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         /*
-         * --------------------------------------------------------
          * Drawer
-         * --------------------------------------------------------
          */
 
         if (drawerLayout != null) {
@@ -717,7 +527,7 @@ public class MainActivity extends AppCompatActivity
 
     /*
      * ============================================================
-     * NAVIGATION DRAWER
+     * NAVIGATION
      * ============================================================
      */
 
@@ -737,16 +547,7 @@ public class MainActivity extends AppCompatActivity
             );
         }
 
-        int itemId =
-                item.getItemId();
-
-        switch (itemId) {
-
-            /*
-             * ----------------------------------------------------
-             * SHORTCUTS
-             * ----------------------------------------------------
-             */
+        switch (item.getItemId()) {
 
             case R.id.menu_item_shortcuts:
 
@@ -763,12 +564,6 @@ public class MainActivity extends AppCompatActivity
 
                 break;
 
-            /*
-             * ----------------------------------------------------
-             * CONTAINERS
-             * ----------------------------------------------------
-             */
-
             case R.id.menu_item_containers:
 
                 preferences.edit()
@@ -784,12 +579,6 @@ public class MainActivity extends AppCompatActivity
 
                 break;
 
-            /*
-             * ----------------------------------------------------
-             * INPUT CONTROLS
-             * ----------------------------------------------------
-             */
-
             case R.id.menu_item_input_controls:
 
                 showFragment(
@@ -800,12 +589,6 @@ public class MainActivity extends AppCompatActivity
 
                 break;
 
-            /*
-             * ----------------------------------------------------
-             * SETTINGS
-             * ----------------------------------------------------
-             */
-
             case R.id.menu_item_settings:
 
                 showFragment(
@@ -813,12 +596,6 @@ public class MainActivity extends AppCompatActivity
                 );
 
                 break;
-
-            /*
-             * ----------------------------------------------------
-             * ABOUT
-             * ----------------------------------------------------
-             */
 
             case R.id.menu_item_about:
 
@@ -846,7 +623,8 @@ public class MainActivity extends AppCompatActivity
         FragmentManager fragmentManager =
                 getSupportFragmentManager();
 
-        fragmentManager.beginTransaction()
+        fragmentManager
+                .beginTransaction()
                 .replace(
                         R.id.FLFragmentContainer,
                         fragment
@@ -860,32 +638,6 @@ public class MainActivity extends AppCompatActivity
             );
         }
 
-        currentFragment =
-                fragment;
+        currentFragment = fragment;
     }
-
-    /*
-     * ============================================================
-     * LIFECYCLE
-     * ============================================================
-     */
-
-    @Override
-    protected void onDestroy() {
-
-        /*
-         * Não destruir manualmente o JNI aqui.
-         *
-         * O MemoryManager deve cuidar do próprio ciclo de vida
-         * caso seja necessário.
-         */
-
-        memoryManager = null;
-
-        currentFragment = null;
-
-        openFileCallback = null;
-
-        super.onDestroy();
-    }
-                    }
+        }
