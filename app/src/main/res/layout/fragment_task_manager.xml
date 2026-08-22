@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- ================================================= -->
+        <!-- TITLE -->
+        <!-- ================================================= -->
+
+        <TextView
+            android:id="@+id/text_memory_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="MEMORY MANAGER"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingBottom="20dp" />
+
+        <!-- ================================================= -->
+        <!-- RAM -->
+        <!-- ================================================= -->
+
+        <TextView
+            android:id="@+id/text_memory_ram"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="RAM física       0.0 GB / 0.0 GB"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:paddingBottom="8dp" />
+
+        <ProgressBar
+            android:id="@+id/progress_memory_ram"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="14dp"
+            android:max="100"
+            android:progress="0"
+            android:layout_marginBottom="20dp" />
+
+        <!-- ================================================= -->
+        <!-- WINLATOR -->
+        <!-- ================================================= -->
+
+        <TextView
+            android:id="@+id/text_memory_winlator"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Winlator          0 MB"
+            android:textSize="16sp"
+            android:paddingVertical="5dp" />
+
+        <!-- ================================================= -->
+        <!-- WINE -->
+        <!-- ================================================= -->
+
+        <TextView
+            android:id="@+id/text_memory_wine"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Wine              N/D"
+            android:textSize="16sp"
+            android:paddingVertical="5dp" />
+
+        <!-- ================================================= -->
+        <!-- BOX64 -->
+        <!-- ================================================= -->
+
+        <TextView
+            android:id="@+id/text_memory_box64"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Box64             N/D"
+            android:textSize="16sp"
+            android:paddingVertical="5dp" />
+
+        <!-- ================================================= -->
+        <!-- OTHER -->
+        <!-- ================================================= -->
+
+        <TextView
+            android:id="@+id/text_memory_other"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Outros            0 MB"
+            android:textSize="16sp"
+            android:paddingVertical="5dp"
+            android:layout_marginBottom="20dp" />
+
+        <!-- ================================================= -->
+        <!-- SWAP -->
+        <!-- ================================================= -->
+
+        <TextView
+            android:id="@+id/text_memory_swap"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="SWAP              0.0 GB / 8.0 GB"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:paddingBottom="8dp" />
+
+        <ProgressBar
+            android:id="@+id/progress_memory_swap"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="14dp"
+            android:max="100"
+            android:progress="0"
+            android:layout_marginBottom="20dp" />
+
+        <!-- ================================================= -->
+        <!-- VIRTUAL MEMORY -->
+        <!-- ================================================= -->
+
+        <TextView
+            android:id="@+id/text_memory_virtual"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Memória virtual  4.0 GB"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:paddingVertical="8dp" />
+
+        <!-- ================================================= -->
+        <!-- PROFILE -->
+        <!-- ================================================= -->
+
+        <TextView
+            android:id="@+id/text_memory_profile"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Perfil            PERFORMANCE"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:paddingVertical="8dp" />
+
+    </LinearLayout>
+
+</ScrollView>
